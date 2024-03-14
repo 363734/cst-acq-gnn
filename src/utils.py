@@ -1,40 +1,12 @@
 import math
 import time
-
-from cpmpy import boolvar, Model, all, sum, SolverLookup
+from cpmpy.expressions.core import Expression, Comparison, Operator
+from cpmpy.expressions.variables import _NumVarImpl, _BoolVarImpl, _IntVarImpl, NDVarArray
 from sklearn.utils import class_weight
 import numpy as np
 
 import cpmpy
 import re
-from cpmpy.expressions.utils import all_pairs
-from itertools import chain
-
-def check_value(c):
-    return bool(c.value())
-
-
-def get_con_subset(B, Y):
-    Y = frozenset(Y)
-    return [c for c in B if frozenset(get_scope(c)).issubset(Y)]
-
-
-def get_kappa(B, Y):
-    Y = frozenset(Y)
-    return [c for c in B if frozenset(get_scope(c)).issubset(Y) and c.value() is False]
-
-
-def get_lambda(B, Y):
-    Y = frozenset(Y)
-    return [c for c in B if frozenset(get_scope(c)).issubset(Y) and c.value() is True]
-
-
-def get_scopes_vars(C):
-    return set([x for scope in [get_scope(c) for c in C] for x in scope])
-
-
-def get_scopes(C):
-    return list(set([tuple(get_scope(c)) for c in C]))
 
 
 def get_scope(constraint):
@@ -56,40 +28,6 @@ def get_scope(constraint):
 
 def get_arity(constraint):
     return len(get_scope(constraint))
-
-
-def get_min_arity(C):
-    if len(C) > 0:
-        return min([get_arity(c) for c in C])
-    return 0
-
-
-def get_max_arity(C):
-    if len(C) > 0:
-        return max([get_arity(c) for c in C])
-    return 0
-
-
-def get_relation(c, gamma):
-    scope = get_scope(c)
-
-    for i in range(len(gamma)):
-        relation = gamma[i]
-
-        if relation.count("var") != len(scope):
-            continue
-
-        constraint = relation.replace("var1", "scope[0]")
-        for j in range(1, len(scope)):
-            constraint = constraint.replace("var" + str(j + 1), "scope[" + str(j) + "]")
-
-        constraint = eval(constraint)
-
-        if hash(constraint) == hash(c):
-            return i
-
-    return -1
-
 
 def get_var_name(var):
     name = re.findall("\[\d+[,\d+]*\]", var.name)
@@ -119,14 +57,89 @@ def get_divisors(n):
             divisors.append(i)
     return divisors
 
-def compute_sample_weights(Y):
-    c_w = class_weight.compute_class_weight('balanced', classes=np.unique(Y), y=Y)
-    sw = []
-
-    for i in range(len(Y)):
-        if Y[i] == False:
-            sw.append(c_w[0])
+def get_variables_from_constraints(constraints):
+    def get_variables(expr):
+        if isinstance(expr, _IntVarImpl):
+            return [expr]
+        elif isinstance(expr, _BoolVarImpl):
+            return [expr]
+        elif isinstance(expr, np.bool_):
+            return []
+        elif isinstance(expr, np.int_) or isinstance(expr, int):
+            return []
         else:
-            sw.append(c_w[1])
+            # Recursively find variables in all arguments of the expression
+            return [var for argument in expr.args for var in get_variables(argument)]
 
-    return sw
+    # Create set to hold unique variables
+    variable_set = set()
+    for constraint in constraints:
+        variable_set.update(get_variables(constraint))
+
+    extract_nums = lambda s: list(map(int, s.name[s.name.index("[") + 1:s.name.index("]")].split(',')))
+
+    variable_list = sorted(variable_set, key=extract_nums)
+    return variable_list
+
+## to attach to CPMpy expressions!!
+def expr_get_relation(self):
+    # flatten and replace
+    flatargs = []
+    for arg in self.args:
+        if isinstance(arg, np.ndarray):
+            for a in arg.flat:
+                if isinstance(a, _NumVarImpl):
+                    flatargs.append("var")
+                elif isinstance(a, Expression):
+                    flatargs.append(a.get_relation())
+                else:
+                    flatargs.append("const")
+        else:
+            if isinstance(arg, _NumVarImpl):
+                flatargs.append("var")
+            elif isinstance(arg, Expression):
+                flatargs.append(arg.get_relation())
+            else:
+                flatargs.append("const")
+
+    if len(flatargs) > 1:
+        flatargs = tuple(flatargs)
+    else:
+        flatargs = flatargs[0] if not isinstance(flatargs[0], _NumVarImpl) else tuple(flatargs)
+
+    return (self.name, flatargs)
+Expression.get_relation = expr_get_relation  # attach to CPMpy expressions
+
+def comp_get_relation(self):
+    flatargs = []
+
+    for arg in self.args:
+        if isinstance(arg, _NumVarImpl):
+            flatargs.append("var")
+        elif isinstance(arg, Expression):
+            flatargs.append(arg.get_relation())
+        else:
+            flatargs.append("const")
+
+    return (self.name, (flatargs[0], flatargs[1]))
+Comparison.get_relation = comp_get_relation  # attach to CPMpy comparisons
+
+def get_constant(constraint):
+    # this code is much more dangerous/too few cases then get_variables()
+    if isinstance(constraint, cpmpy.expressions.variables._IntVarImpl):
+        return []
+    elif isinstance(constraint, cpmpy.expressions.core.Expression):
+        constants = []
+        for argument in constraint.args:
+            if not isinstance(argument, cpmpy.expressions.variables._IntVarImpl):
+                constants.extend(get_constant(argument))
+        return constants
+    else:
+        return [constraint]
+
+def average_difference(values):
+    if len(values) < 2:
+        return 0
+    differences = [values[i+1] - values[i] for i in range(len(values)-1)]
+    return sum(differences) / len(differences)
+
