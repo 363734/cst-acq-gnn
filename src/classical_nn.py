@@ -1,6 +1,7 @@
 import time
 from statistics import mean, stdev
 
+from matplotlib import pyplot as plt
 from sklearn.metrics import balanced_accuracy_score, make_scorer
 from sklearn.model_selection import cross_validate
 
@@ -178,6 +179,14 @@ start_t = time.time()
 classifier.fit(datasetX, datasetY)
 end_t = time.time()
 print("training time: ", end_t-start_t)
+
+fig, ax = plt.subplots(figsize=(6,4))
+ax.plot(classifier.loss_curve_)
+ax.set_xlabel('Number of iterations')
+ax.set_ylabel('Loss')
+plt.show()
+
+### Cross validation scores --------
 
 scoring = {"Acc": 'accuracy', "Bal_Acc": make_scorer(balanced_accuracy_score), "f1-score": 'f1'}
 
