@@ -160,7 +160,7 @@ class ProblemInstance:
         return features
 
 
-bench = "exam_timetabling"
+bench = "all"
 
 if bench == "sudoku":
     constraints = p_load('../data/sudoku/dataset_C.pickle')
@@ -174,14 +174,41 @@ elif bench == "nurse_rostering":
 elif bench == "exam_timetabling":
     constraints = p_load('../data/exam_timetabling/dataset_C.pickle')
     datasetY = p_load('../data/exam_timetabling/dataset_CY.pickle')
+elif bench == "all":
+    constraints = p_load('../data/sudoku/dataset_C.pickle')
+    sudokuY = p_load('../data/sudoku/dataset_CY.pickle')
+    sudoku = ProblemInstance(B=constraints, X=get_variables_from_constraints(constraints))
+    constraints = p_load('../data/jsudoku/dataset_C.pickle')
+    jsudokuY = p_load('../data/jsudoku/dataset_CY.pickle')
+    jsudoku = ProblemInstance(B=constraints, X=get_variables_from_constraints(constraints))
+    constraints = p_load('../data/nurse_rostering/dataset_C.pickle')
+    nurse_rostY = p_load('../data/nurse_rostering/dataset_CY.pickle')
+    nurse_rost = ProblemInstance(B=constraints, X=get_variables_from_constraints(constraints))
+    constraints = p_load('../data/exam_timetabling/dataset_C.pickle')
+    exam_ttY = p_load('../data/exam_timetabling/dataset_CY.pickle')
+    exam_tt = ProblemInstance(B=constraints, X=get_variables_from_constraints(constraints))
+
+    sudokuX = sudoku.get_dataset()
+    print(np.shape(sudokuX))
+    jsudokuX = jsudoku.get_dataset()
+    print(np.shape(jsudokuX))
+    nurse_rostX = nurse_rost.get_dataset()
+    print(np.shape(nurse_rostX))
+    exam_ttX = exam_tt.get_dataset()
+    print(np.shape(exam_ttX))
+
+    # concat X
+    datasetX = sudokuX + jsudokuX + nurse_rostX + exam_ttX
+    # concat Y
+    datasetY = sudokuY + jsudokuY + nurse_rostY + exam_ttY
+
 else:
     raise NotImplementedError("Benchmark not implemented")
 
-
-problem = ProblemInstance(B=constraints, X=get_variables_from_constraints(constraints))
-problem.generate_datasetX()
-
-datasetX = problem.get_dataset()
+if bench != "all":
+    problem = ProblemInstance(B=constraints, X=get_variables_from_constraints(constraints))
+    problem.generate_datasetX()
+    datasetX = problem.get_dataset()
 
 classifier = MLPClassifier(hidden_layer_sizes=(64,), activation='relu', solver='adam',
                                                random_state=1, learning_rate_init=0.01)
