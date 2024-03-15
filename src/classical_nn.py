@@ -53,7 +53,9 @@ class ProblemInstance:
             self.dim_divisors.append(dim_divisors)
 
     def get_dataset(self):
-        return self. datasetX
+        if len(self.datasetX) == 0:
+            self.generate_datasetX()
+        return self.datasetX
 
     def generate_datasetX(self):
 
@@ -88,6 +90,11 @@ class ProblemInstance:
                 for i in range(3): features.append(0)
                 features.append(0.0)
 
+                # dummy latent dimension features
+                for l in range(max_blocks):
+                    features.append(True)
+                    for i in range(3): features.append(0)
+                    features.append(0.0)
                 continue
 
             dimj_same = all([dim_temp == dim[j][0] for dim_temp in dim[j]])
@@ -118,7 +125,6 @@ class ProblemInstance:
                 if self.debug_mode:
                     print(vars_block[l])
 
-
                 block_same = all([vars_block[l][var] == vars_block[l][0] for var in range(len(vars_block[l]))])
                 features.append(block_same)
                 block_max = max(vars_block[l])
@@ -140,8 +146,6 @@ class ProblemInstance:
         if con_in_gamma == -1:
             raise Exception(f"Check why constraint relation was not found in relations: constraint {c}, relation: {con_relation}")
         features.append(con_in_gamma)
-
-        arity = len(scope)
         features.append(arity)
 
         num = get_constant(c)
