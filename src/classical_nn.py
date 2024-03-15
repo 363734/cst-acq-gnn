@@ -1,8 +1,9 @@
 import time
 from statistics import mean, stdev
 
+import numpy as np
 from matplotlib import pyplot as plt
-from sklearn.metrics import balanced_accuracy_score, make_scorer
+from sklearn.metrics import balanced_accuracy_score, make_scorer, accuracy_score, f1_score
 from sklearn.model_selection import cross_validate
 
 from utils import *
@@ -11,9 +12,9 @@ from src.memoization import p_load
 
 from sklearn.neural_network import MLPClassifier
 
-
 max_dimensions = 4
 max_blocks = 4
+
 
 class ProblemInstance:
 
@@ -115,11 +116,11 @@ class ProblemInstance:
             # divisors features --- per var_name, per dimension (up to max dimensions), per divisor (up to max divisors)
             # block same, max, min, average, spread
             # for each variable name (type of variable)
-            #for var_name in range(len(self.var_names)):
-                # for each dimension of that type of variable
-#            vars_block = [[dim[j][var] // divisor for var in range(len(scope))
-#                           if self.var_names[var_name] == get_var_name(scope[var])]
-#                          for divisor in self.dim_divisors[var_name][j]]
+            # for var_name in range(len(self.var_names)):
+            # for each dimension of that type of variable
+            #            vars_block = [[dim[j][var] // divisor for var in range(len(scope))
+            #                           if self.var_names[var_name] == get_var_name(scope[var])]
+            #                          for divisor in self.dim_divisors[var_name][j]]
 
             for l in range(max_blocks):
                 if self.debug_mode:
@@ -144,7 +145,8 @@ class ProblemInstance:
                 break
 
         if con_in_gamma == -1:
-            raise Exception(f"Check why constraint relation was not found in relations: constraint {c}, relation: {con_relation}")
+            raise Exception(
+                f"Check why constraint relation was not found in relations: constraint {c}, relation: {con_relation}")
         features.append(con_in_gamma)
         features.append(arity)
 
@@ -160,81 +162,148 @@ class ProblemInstance:
         return features
 
 
-bench = "all"
+def benchmark_exp(datasetX, datasetY):
 
-if bench == "sudoku":
-    constraints = p_load('../data/sudoku/dataset_C.pickle')
-    datasetY = p_load('../data/sudoku/dataset_CY.pickle')
-elif bench == "jsudoku":
-    constraints = p_load('../data/jsudoku/dataset_C.pickle')
-    datasetY = p_load('../data/jsudoku/dataset_CY.pickle')
-elif bench == "nurse_rostering":
-    constraints = p_load('../data/nurse_rostering/dataset_C.pickle')
-    datasetY = p_load('../data/nurse_rostering/dataset_CY.pickle')
-elif bench == "exam_timetabling":
-    constraints = p_load('../data/exam_timetabling/dataset_C.pickle')
-    datasetY = p_load('../data/exam_timetabling/dataset_CY.pickle')
-elif bench == "all":
-    constraints = p_load('../data/sudoku/dataset_C.pickle')
-    sudokuY = p_load('../data/sudoku/dataset_CY.pickle')
-    sudoku = ProblemInstance(B=constraints, X=get_variables_from_constraints(constraints))
-    constraints = p_load('../data/jsudoku/dataset_C.pickle')
-    jsudokuY = p_load('../data/jsudoku/dataset_CY.pickle')
-    jsudoku = ProblemInstance(B=constraints, X=get_variables_from_constraints(constraints))
-    constraints = p_load('../data/nurse_rostering/dataset_C.pickle')
-    nurse_rostY = p_load('../data/nurse_rostering/dataset_CY.pickle')
-    nurse_rost = ProblemInstance(B=constraints, X=get_variables_from_constraints(constraints))
-    constraints = p_load('../data/exam_timetabling/dataset_C.pickle')
-    exam_ttY = p_load('../data/exam_timetabling/dataset_CY.pickle')
-    exam_tt = ProblemInstance(B=constraints, X=get_variables_from_constraints(constraints))
+    classifier = MLPClassifier(hidden_layer_sizes=(64,), activation='relu', solver='adam',
+                               random_state=1, learning_rate_init=0.01)
 
-    sudokuX = sudoku.get_dataset()
-    print(np.shape(sudokuX))
-    jsudokuX = jsudoku.get_dataset()
-    print(np.shape(jsudokuX))
-    nurse_rostX = nurse_rost.get_dataset()
-    print(np.shape(nurse_rostX))
-    exam_ttX = exam_tt.get_dataset()
-    print(np.shape(exam_ttX))
+    print("Starting training ---------")
+    start_t = time.time()
 
-    # concat X
-    datasetX = sudokuX + jsudokuX + nurse_rostX + exam_ttX
-    # concat Y
-    datasetY = sudokuY + jsudokuY + nurse_rostY + exam_ttY
+    print(np.shape(datasetX), np.shape(datasetY))
+    classifier.fit(datasetX, datasetY)
+    end_t = time.time()
+    print("training time: ", end_t - start_t)
 
-else:
-    raise NotImplementedError("Benchmark not implemented")
+    fig, ax = plt.subplots(figsize=(6, 4))
+    ax.plot(classifier.loss_curve_)
+    ax.set_xlabel('Number of iterations')
+    ax.set_ylabel('Loss')
+    plt.show()
 
-if bench != "all":
-    problem = ProblemInstance(B=constraints, X=get_variables_from_constraints(constraints))
-    problem.generate_datasetX()
-    datasetX = problem.get_dataset()
+    ### Cross validation scores --------
 
-classifier = MLPClassifier(hidden_layer_sizes=(64,), activation='relu', solver='adam',
-                                               random_state=1, learning_rate_init=0.01)
+    scoring = {"Acc": 'accuracy', "Bal_Acc": make_scorer(balanced_accuracy_score), "f1-score": 'f1'}
 
-print("Starting training ---------")
-start_t = time.time()
-classifier.fit(datasetX, datasetY)
-end_t = time.time()
-print("training time: ", end_t-start_t)
+    print("Starting cross validation ---------")
+    scores = cross_validate(classifier, datasetX, datasetY,
+                            scoring=scoring,
+                            cv=10)  # fit_params={'sample_weight': compute_sample_weights(Y)})
 
-fig, ax = plt.subplots(figsize=(6,4))
-ax.plot(classifier.loss_curve_)
-ax.set_xlabel('Number of iterations')
-ax.set_ylabel('Loss')
-plt.show()
+    print(scores)
 
-### Cross validation scores --------
+def combined_exp(X, Y, benchmark_names):
 
-scoring = {"Acc": 'accuracy', "Bal_Acc": make_scorer(balanced_accuracy_score), "f1-score": 'f1'}
+    ### Full training with all (to see time and learning curve ------
 
-print("Starting cross validation ---------")
-scores = cross_validate(classifier, datasetX, datasetY,
-                        scoring=scoring,
-                        cv=10)  # fit_params={'sample_weight': compute_sample_weights(Y)})
+    # Concat for full training
+    datasetX = []
+    datasetY = []
+    [datasetX.extend(x) for x in X]
+    [datasetY.extend(y) for y in Y]
 
-print(scores)
+    classifier = MLPClassifier(hidden_layer_sizes=(64,), activation='relu', solver='adam',
+                               random_state=1, learning_rate_init=0.01)
+
+    print("Starting training ---------")
+    start_t = time.time()
+    classifier.fit(datasetX, datasetY)
+    end_t = time.time()
+    print("training time: ", end_t - start_t)
+
+    fig, ax = plt.subplots(figsize=(6, 4))
+    ax.plot(classifier.loss_curve_)
+    ax.set_xlabel('Number of iterations')
+    ax.set_ylabel('Loss')
+    plt.show()
+
+    print("Starting leave-one-out cross-validation ---------")
+    ### Leave one out cross validation
+    folds = len(X)
+    for fold in range(folds):
+
+        # create train and test datasets for current fold -- train with all except one (the one corresponding to the fold's number), and test on that one
+        trainX = []
+        [trainX.extend(X[xi]) for xi in range(folds) if xi != fold]
+        trainY = []
+        [trainY.extend(Y[yi]) for yi in range(folds) if yi != fold]
+
+        testX = X[fold]
+        testY = Y[fold]
+        print(np.shape(trainX),np.shape(trainY))
+        classifier.fit(trainX, trainY)
+        y = classifier.predict(testX)
+
+        acc = accuracy_score(testY, y)
+        balanced_acc = balanced_accuracy_score(testY, y)
+        f1 = f1_score(testY, y)
+
+        labels = ['Accuracy', 'Balanced Accuracy', 'F1 Score']
+        scores = [acc, balanced_acc, f1]
+
+        plt.figure(figsize=(8, 5))
+        plt.bar(labels, scores, color=['blue', 'green', 'orange'])
+        plt.ylabel('Score')
+        plt.title(benchmark_names[fold])
+        plt.ylim(0, 1)  # Set the y-axis limit from 0 to 1
+        plt.show()
 
 
+def main():
+
+    setting = "combined"
+    benchmark_names = ["sudoku", "jsudoku", "nurse_rostering", "exam_timetabling"]
+
+    bench = "nurse_rostering"
+
+    if setting == "bench":
+        if bench == "sudoku":
+            constraints = p_load('../data/sudoku/dataset_C.pickle')
+            datasetY = p_load('../data/sudoku/dataset_CY.pickle')
+        elif bench == "jsudoku":
+            constraints = p_load('../data/jsudoku/dataset_C.pickle')
+            datasetY = p_load('../data/jsudoku/dataset_CY.pickle')
+        elif bench == "nurse_rostering":
+            constraints = p_load('../data/nurse_rostering/dataset_C.pickle')
+            datasetY = p_load('../data/nurse_rostering/dataset_CY.pickle')
+        elif bench == "exam_timetabling":
+            constraints = p_load('../data/exam_timetabling/dataset_C.pickle')
+            datasetY = p_load('../data/exam_timetabling/dataset_CY.pickle')
+        else:
+            raise NotImplementedError("Benchmark not implemented")
+
+        problem = ProblemInstance(B=constraints, X=get_variables_from_constraints(constraints))
+        datasetX = problem.get_dataset()
+
+        benchmark_exp(datasetX, datasetY)
+
+    elif setting == "combined":
+
+        constraints = p_load('../data/sudoku/dataset_C.pickle')
+        sudokuY = p_load('../data/sudoku/dataset_CY.pickle')
+        sudoku = ProblemInstance(B=constraints, X=get_variables_from_constraints(constraints))
+        constraints = p_load('../data/jsudoku/dataset_C.pickle')
+        jsudokuY = p_load('../data/jsudoku/dataset_CY.pickle')
+        jsudoku = ProblemInstance(B=constraints, X=get_variables_from_constraints(constraints))
+        constraints = p_load('../data/nurse_rostering/dataset_C.pickle')
+        nurse_rostY = p_load('../data/nurse_rostering/dataset_CY.pickle')
+        nurse_rost = ProblemInstance(B=constraints, X=get_variables_from_constraints(constraints))
+        constraints = p_load('../data/exam_timetabling/dataset_C.pickle')
+        exam_ttY = p_load('../data/exam_timetabling/dataset_CY.pickle')
+        exam_tt = ProblemInstance(B=constraints, X=get_variables_from_constraints(constraints))
+
+        sudokuX = sudoku.get_dataset()
+        jsudokuX = jsudoku.get_dataset()
+        nurse_rostX = nurse_rost.get_dataset()
+        exam_ttX = exam_tt.get_dataset()
+
+        # concat X
+        X = [sudokuX, jsudokuX, nurse_rostX, exam_ttX]
+        # concat Y
+        Y = [sudokuY, jsudokuY, nurse_rostY, exam_ttY]
+
+        combined_exp(X, Y, benchmark_names)
+
+if __name__ == "__main__":
+    main()
 
