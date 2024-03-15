@@ -1,4 +1,5 @@
 import argparse
+import os
 import pickle
 import random
 from itertools import combinations
@@ -579,6 +580,8 @@ if __name__ == "__main__":
     out_file_X = f"benchmarks/{args.benchmark}/{args.benchmark}_{len(C_T)}_C.pickle"
     out_file_Y = f"benchmarks/{args.benchmark}/{args.benchmark}_{len(C_T)}_CY.pickle"
 
+    os.makedirs(os.path.dirname(out_file_X), exist_ok=True)
+    os.makedirs(os.path.dirname(out_file_Y), exist_ok=True)
     with open(out_file_X, 'wb') as handle:
         pickle.dump(datasetC, handle, protocol=pickle.HIGHEST_PROTOCOL)
     with open(out_file_Y, 'wb') as handle:
