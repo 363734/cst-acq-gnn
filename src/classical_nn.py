@@ -1,3 +1,4 @@
+import pickle
 import time
 from statistics import mean, stdev
 
@@ -18,12 +19,16 @@ max_blocks = 4
 
 class ProblemInstance:
 
-    def __init__(self, labels=None, B=list(), X=set()):
+    def __init__(self, labels=None, gamma=None, B=list(), X=set()):
 
         self.debug_mode = False
 
         self.B = B
-        self.gamma = list(set([c.get_relation() for c in B]))  # Language: relations derived from input model
+        self.gamma = gamma
+        if self.gamma is None:
+            self.gamma = list(set([c.get_relation() for c in B]))  # Language: relations derived from input model
+
+        print("lang: ", self.gamma)
         self.X = list(X)
         self.labels = labels
 
@@ -52,6 +57,9 @@ class ProblemInstance:
                 dim_divisors.append(divisors)
 
             self.dim_divisors.append(dim_divisors)
+
+    def get_lang(self):
+        return self.gamma
 
     def get_dataset(self):
         if len(self.datasetX) == 0:
@@ -211,6 +219,11 @@ def combined_exp(X, Y, benchmark_names):
     end_t = time.time()
     print("training time: ", end_t - start_t)
 
+    # Save the model to a file
+#    with open('pretrained.pkl', 'wb') as file:
+#        pickle.dump(classifier, file)
+#        print("model saved ---")
+
     fig, ax = plt.subplots(figsize=(6, 4))
     ax.plot(classifier.loss_curve_)
     ax.set_xlabel('Number of iterations')
@@ -279,18 +292,27 @@ def main():
 
     elif setting == "combined":
 
-        constraints = p_load('../data/sudoku/dataset_C.pickle')
-        sudokuY = p_load('../data/sudoku/dataset_CY.pickle')
-        sudoku = ProblemInstance(B=constraints, X=get_variables_from_constraints(constraints))
-        constraints = p_load('../data/jsudoku/dataset_C.pickle')
-        jsudokuY = p_load('../data/jsudoku/dataset_CY.pickle')
-        jsudoku = ProblemInstance(B=constraints, X=get_variables_from_constraints(constraints))
-        constraints = p_load('../data/nurse_rostering/dataset_C.pickle')
-        nurse_rostY = p_load('../data/nurse_rostering/dataset_CY.pickle')
-        nurse_rost = ProblemInstance(B=constraints, X=get_variables_from_constraints(constraints))
         constraints = p_load('../data/exam_timetabling/dataset_C.pickle')
         exam_ttY = p_load('../data/exam_timetabling/dataset_CY.pickle')
         exam_tt = ProblemInstance(B=constraints, X=get_variables_from_constraints(constraints))
+        lang = exam_tt.get_lang()
+
+        constraints = p_load('../data/sudoku/dataset_C.pickle')
+        sudokuY = p_load('../data/sudoku/dataset_CY.pickle')
+        sudoku = ProblemInstance(gamma=lang, B=constraints, X=get_variables_from_constraints(constraints))
+
+        constraints = p_load('../data/jsudoku/dataset_C.pickle')
+        jsudokuY = p_load('../data/jsudoku/dataset_CY.pickle')
+        jsudoku = ProblemInstance(gamma=lang, B=constraints, X=get_variables_from_constraints(constraints))
+
+        constraints = p_load('../data/nurse_rostering/dataset_C.pickle')
+        nurse_rostY = p_load('../data/nurse_rostering/dataset_CY.pickle')
+        nurse_rost = ProblemInstance(gamma=lang, B=constraints, X=get_variables_from_constraints(constraints))
+
+        # Save the model to a file
+#        with open('lang.pkl', 'wb') as file:
+#            pickle.dump(lang, file)
+#            print("language saved ---")
 
         sudokuX = sudoku.get_dataset()
         jsudokuX = jsudoku.get_dataset()
