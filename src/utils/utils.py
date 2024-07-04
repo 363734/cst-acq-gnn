@@ -32,6 +32,7 @@ def get_arity(constraint):
     return len(get_scope(constraint))
 
 def get_var_name(var):
+    # given a name in the forme "name[i,j,..]" return "name"
     name = re.findall("\[\d+[,\d+]*\]", var.name)
     name = var.name.replace(name[0], '')
     return name
@@ -53,11 +54,7 @@ def get_var_dims(var):
 
 
 def get_divisors(n):
-    divisors = list()
-    for i in range(2, int(n / 2) + 1):
-        if n % i == 0:
-            divisors.append(i)
-    return divisors
+    return [i for i in range(2, int(n / 2) + 1) if n % i == 0]
 
 def get_variables_from_constraints(constraints):
     def get_variables(expr):

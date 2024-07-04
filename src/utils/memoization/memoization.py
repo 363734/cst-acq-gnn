@@ -3,6 +3,7 @@
 # json is used when the storage is to fix some element (partition train/test) that should be human readable
 
 import json
+import os
 import pickle
 
 
@@ -10,15 +11,16 @@ import pickle
 def p_load(filename: str):
     with open(filename, 'rb') as file:
         obj = pickle.load(file)
-        print('Load pickle ({})'.format(filename))
+        print('\tLoad pickle ({})'.format(filename))
         return obj
 
 
 # save to pickle file
 def p_save(filename: str, obj, protocol=pickle.HIGHEST_PROTOCOL):
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
     with open(filename, "wb") as file:
         pickle.dump(obj, file, protocol)
-        print('Save pickle ({})'.format(filename))
+        print('\tSave pickle ({})'.format(filename))
 
 
 def p_save_high(filename: str, obj):
@@ -34,13 +36,14 @@ def j_load(filename: str):
     with open(filename, "r") as f:
         data = f.read()
     obj = json.loads(data)
-    print('Load json ({})'.format(filename))
+    print('\tLoad json ({})'.format(filename))
     return obj
 
 
 # save to json file
 def j_save(filename: str, obj):
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
     data = json.dumps(obj)
     with open(filename, "w") as f:
         f.write(data)
-        print('Save json ({})'.format(filename))
+        print('\tSave json ({})'.format(filename))

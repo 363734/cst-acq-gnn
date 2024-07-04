@@ -1,19 +1,22 @@
-import time
-from statistics import mean, stdev
+from statistics import mean
 
-import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.metrics import balanced_accuracy_score, make_scorer, accuracy_score, f1_score
 from sklearn.model_selection import cross_validate
 
-from utils import *
+from src.utils.utils import *
 from cpmpy import *
-from src.memoization import p_load
+from src.utils.memoization import p_load
 
 from sklearn.neural_network import MLPClassifier
 
+from src.utils.feature import Feature
+
 max_dimensions = 4
 max_blocks = 4
+
+
+
 
 
 class ProblemInstance:
@@ -39,12 +42,17 @@ class ProblemInstance:
         self.var_names = list(set([get_var_name(x) for x in self.X]))
         var_dims = [[get_var_dims(x) for x in self.X if get_var_name(x) == self.var_names[i]] for i in
                     range(len(self.var_names))]
+        # for each var name existing, gather the dimensions of each var of the same names
+
         self.dim_lengths = [
             [np.max([var_dims[i][k][j] for k in range(len(var_dims[i]))]) + 1 for j in range(len(var_dims[i][0]))] for i
             in range(len(var_dims))]
+        # for each var name, for each dim get the length of the dim by looking over each variable of the name (for ex for the sudoku = 9)
+
 
         self.dim_divisors = []
 
+        # for each var names (each category of vars), an array of for each dim with its 'length', get all divisor of that length
         for i in range(len(self.dim_lengths)):
             dim_divisors = []
             for j in range(len(self.dim_lengths[i])):
@@ -258,17 +266,17 @@ def main():
 
     if setting == "bench":
         if bench == "sudoku":
-            constraints = p_load('../data/sudoku/dataset_C.pickle')
-            datasetY = p_load('../data/sudoku/dataset_CY.pickle')
+            constraints = p_load('../../data/sudoku/dataset_C.pickle')
+            datasetY = p_load('../../data/sudoku/dataset_CY.pickle')
         elif bench == "jsudoku":
-            constraints = p_load('../data/jsudoku/dataset_C.pickle')
-            datasetY = p_load('../data/jsudoku/dataset_CY.pickle')
+            constraints = p_load('../../data/jsudoku/dataset_C.pickle')
+            datasetY = p_load('../../data/jsudoku/dataset_CY.pickle')
         elif bench == "nurse_rostering":
-            constraints = p_load('../data/nurse_rostering/dataset_C.pickle')
-            datasetY = p_load('../data/nurse_rostering/dataset_CY.pickle')
+            constraints = p_load('../../data/nurse_rostering/dataset_C.pickle')
+            datasetY = p_load('../../data/nurse_rostering/dataset_CY.pickle')
         elif bench == "exam_timetabling":
-            constraints = p_load('../data/exam_timetabling/dataset_C.pickle')
-            datasetY = p_load('../data/exam_timetabling/dataset_CY.pickle')
+            constraints = p_load('../../data/exam_timetabling/dataset_C.pickle')
+            datasetY = p_load('../../data/exam_timetabling/dataset_CY.pickle')
         else:
             raise NotImplementedError("Benchmark not implemented")
 
@@ -279,17 +287,17 @@ def main():
 
     elif setting == "combined":
 
-        constraints = p_load('../data/sudoku/dataset_C.pickle')
-        sudokuY = p_load('../data/sudoku/dataset_CY.pickle')
+        constraints = p_load('../../data/sudoku/dataset_C.pickle')
+        sudokuY = p_load('../../data/sudoku/dataset_CY.pickle')
         sudoku = ProblemInstance(B=constraints, X=get_variables_from_constraints(constraints))
-        constraints = p_load('../data/jsudoku/dataset_C.pickle')
-        jsudokuY = p_load('../data/jsudoku/dataset_CY.pickle')
+        constraints = p_load('../../data/jsudoku/dataset_C.pickle')
+        jsudokuY = p_load('../../data/jsudoku/dataset_CY.pickle')
         jsudoku = ProblemInstance(B=constraints, X=get_variables_from_constraints(constraints))
-        constraints = p_load('../data/nurse_rostering/dataset_C.pickle')
-        nurse_rostY = p_load('../data/nurse_rostering/dataset_CY.pickle')
+        constraints = p_load('../../data/nurse_rostering/dataset_C.pickle')
+        nurse_rostY = p_load('../../data/nurse_rostering/dataset_CY.pickle')
         nurse_rost = ProblemInstance(B=constraints, X=get_variables_from_constraints(constraints))
-        constraints = p_load('../data/exam_timetabling/dataset_C.pickle')
-        exam_ttY = p_load('../data/exam_timetabling/dataset_CY.pickle')
+        constraints = p_load('../../data/exam_timetabling/dataset_C.pickle')
+        exam_ttY = p_load('../../data/exam_timetabling/dataset_CY.pickle')
         exam_tt = ProblemInstance(B=constraints, X=get_variables_from_constraints(constraints))
 
         sudokuX = sudoku.get_dataset()

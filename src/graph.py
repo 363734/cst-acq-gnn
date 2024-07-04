@@ -8,7 +8,6 @@ from cpmpy.transformations.get_variables import get_variables
 
 
 def get_var_id(var_map, var):
-
     if var not in var_map:
         new_id = len(var_map)
         name = get_var_name(var)
@@ -33,11 +32,12 @@ def add_var_node_feature(graph, var_map):
     graph.nodes['var'].data['ub'] = torch.tensor([var_map[var]['ub'] for var in var_list])
     graph.nodes['var'].data['nb_dims'] = torch.tensor([var_map[var]['nb_dims'] for var in var_list])
     graph.nodes['var'].data['dims'] = torch.tensor([var_map[var]['dims'] for var in var_list])
+    #TODO set dims here with same size as tensor do not accept sublist of different size...
     graph.nodes['var'].data['ordering'] = torch.tensor([var_map[var]['ordering'] for var in var_list])
 
 
 def create_graph_unknown(gamma, bias):
-    map_vars = {} # gather var info when new var is selected
+    map_vars = {}  # gather var info when new var is selected
     edges = []
     b_arity = []
     b_rel_id = []
@@ -57,7 +57,7 @@ def create_graph_unknown(gamma, bias):
         # compute arity of bias
         b_arity.append(len(xs))
         rel_id = get_relation(b, gamma)
-        b_rel_id.append([1 if i == rel_id else 0 for i in range(len(gamma)+1)])
+        b_rel_id.append([1 if i == rel_id else 0 for i in range(len(gamma) + 1)])
         b_share_name.append(int(all([map_vars[x]["name"] == map_vars[xs[0]]["name"] for x in xs])))
         b_dim_0_same.append(int(all([map_vars[x]["dims"][0] == map_vars[xs[0]]["dims"][0] for x in xs])))
         b_dim_0_min.append(min([map_vars[x]["dims"][0] for x in xs]))
@@ -75,7 +75,7 @@ def create_graph_unknown(gamma, bias):
     graph.nodes['cst'].data['yes'] = torch.tensor([0] * len(bias))
     graph.nodes['cst'].data['no'] = torch.tensor([0] * len(bias))
     graph.nodes['cst'].data['arity'] = torch.tensor(b_arity)
-    graph.nodes['cst'].data['share_name'] = torch.tensor(b_share_name)
+    graph.nodes['cst'].data['shared_name'] = torch.tensor(b_share_name)
     graph.nodes['cst'].data['dim_0_same'] = torch.tensor(b_dim_0_same)
     graph.nodes['cst'].data['dim_0_min'] = torch.tensor(b_dim_0_min)
     graph.nodes['cst'].data['dim_0_max'] = torch.tensor(b_dim_0_max)
@@ -89,33 +89,51 @@ def create_graph_unknown(gamma, bias):
     return graph
 
 
-def choose_feats(graph):
+def choose_feats(graph, opts):
     # TODO automatic selection of feature trought options (to allow loading of graph where everything is precomputed
     # TODO find the right features
-    nb_dim_selected = 2  # TODO to modify
-    graph.nodes['cst'].data['feats_raw'] = torch.cat((torch.stack([
-        graph.nodes['cst'].data['unknown'],
-        graph.nodes['cst'].data['yes'],
-        graph.nodes['cst'].data['no'],
-        graph.nodes['cst'].data['arity'],
-        graph.nodes['cst'].data['share_name'],
-        graph.nodes['cst'].data['dim_0_same'],
-        graph.nodes['cst'].data['dim_0_min'],
-        graph.nodes['cst'].data['dim_0_max'],
-        graph.nodes['cst'].data['dim_1_same'],
-        graph.nodes['cst'].data['dim_1_min'],
-        graph.nodes['cst'].data['dim_1_max']
-    ], dim=1), graph.nodes['cst'].data['gamma']), dim=1).type(torch.FloatTensor)
-    graph.nodes['var'].data['feats_raw'] = torch.cat((torch.stack((
-        graph.nodes['var'].data['ordering'],
-        graph.nodes['var'].data['is_int'],
-        graph.nodes['var'].data['is_bool'],
-        graph.nodes['var'].data['lb'],
-        graph.nodes['var'].data['ub'],
-        graph.nodes['var'].data['nb_dims'],
-        graph.nodes['var'].data['name_hash']
-    ), dim=1), graph.nodes['var'].data['dims']), dim=1).type(torch.FloatTensor)
+    # TODO add automatic max dim
+    # TODO add latent dim
+    to_stack = []
+    if opts.feat_cst_indicators:
+        to_stack.append(graph.nodes['cst'].data['unknown'])
+        to_stack.append(graph.nodes['cst'].data['yes'])
+        to_stack.append(graph.nodes['cst'].data['no'])
+    if opts.feat_cst_arity:
+        to_stack.append(graph.nodes['cst'].data['arity'])
+    if opts.feat_cst_shared_name:
+        to_stack.append(graph.nodes['cst'].data['shared_name'])
+    if opts.feat_nbdim > 0:
+        to_stack.append(graph.nodes['cst'].data['dim_0_same'])
+        to_stack.append(graph.nodes['cst'].data['dim_0_min'])
+        to_stack.append(graph.nodes['cst'].data['dim_0_max'])
+    if opts.feat_nbdim > 1:
+        to_stack.append(graph.nodes['cst'].data['dim_1_same'])
+        to_stack.append(graph.nodes['cst'].data['dim_1_min'])
+        to_stack.append(graph.nodes['cst'].data['dim_1_max'])
+    to_cat = graph.nodes['cst'].data['gamma']
 
+    graph.nodes['cst'].data['feats_raw'] = torch.cat((torch.stack(to_stack, dim=1), to_cat), dim=1).type(
+        torch.FloatTensor)
+
+    to_stack = []
+    to_stack.append(graph.nodes['var'].data['ordering'])
+    to_stack.append(graph.nodes['var'].data['nb_dims'])
+    if opts.feat_var_name:
+        to_stack.append(graph.nodes['var'].data['name_hash'])
+    if opts.feat_var_type:
+        to_stack.append(graph.nodes['var'].data['is_int'])
+        to_stack.append(graph.nodes['var'].data['is_bool'])
+    if opts.feat_var_bounds:
+        to_stack.append(graph.nodes['var'].data['lb'])
+        to_stack.append(graph.nodes['var'].data['ub'])
+    graph.nodes['var'].data['feats_raw'] = torch.stack(to_stack, dim=1)
+    if opts.feat_nbdim > 0:
+        to_cat = [d[:opts.feat_nbdim].tolist() if len(d) >= opts.feat_nbdim else d.tolist() + [0] * (opts.feat_nbdim - len(d)) for d in
+                  graph.nodes['var'].data['dims']]
+        to_cat = torch.tensor(to_cat)
+        graph.nodes['var'].data['feats_raw'] = torch.cat((graph.nodes['var'].data['feats_raw'], to_cat), dim=1)
+    graph.nodes['var'].data['feats_raw'] = graph.nodes['var'].data['feats_raw'].type(torch.FloatTensor)
 
 
 # TODO add dim max checked
@@ -124,19 +142,22 @@ def choose_feats(graph):
 # else:
 #     x_dim.append(map_vars[x]['dims'] + [-1] * (nb_dim_selected - map_vars[x]['ndims']))
 
-
+# get the mask of the graph, correspond to unknown cst
 def get_mask(graph):
     return graph.nodes['cst'].data['unknown'].nonzero(as_tuple=True)
 
 
+# return the size of the feature of cst nodes
 def nb_feat_cst(graph):
     return graph.nodes['cst'].data['feats_raw'].size(dim=1)
 
 
+# return the size of the feature of var nodes
 def nb_feat_var(graph):
     return graph.nodes['var'].data['feats_raw'].size(dim=1)
 
 
+# apply new scenario to graph, result in a new graph
 def switch_senario(graph, indicators):
     unknown, yes, no = indicators
     uptaded_g = copy.deepcopy(graph)  # TODO: for training, maybe pass by pickle to load quickly new copy
@@ -147,7 +168,6 @@ def switch_senario(graph, indicators):
 
 
 if __name__ == "__main__":
-
     graph_data = {
         ('var', 'in scope of', 'cst'): ([0, 0, 1], [0, 1, 1])
     }

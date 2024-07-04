@@ -2,7 +2,7 @@ import dgl.nn as dglnn
 import torch.nn as nn
 import torch.nn.functional as F
 
-
+# TODO adapt such that last layer is only on relation towards cst
 def gnn_conv(nb_layer, in_feats, hid_feats, out_feats, rel_names):
     if nb_layer == 1:
         return GNNconv_1layer(in_feats, out_feats, rel_names)

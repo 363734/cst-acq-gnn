@@ -1,14 +1,15 @@
 import argparse
 import os
-import pickle
 import random
 from itertools import combinations
-from math import sqrt
 
 import cpmpy as cp
 import numpy as np
 from cpmpy import *
 from cpmpy.transformations.normalize import toplevel_list
+
+from src.benchmark_classical_ca.benchmark_sudoku import construct_sudoku, construct_jsudoku
+from src.utils.memoization.memoization import p_save
 
 
 def all_combinations(args, combos):
@@ -17,39 +18,7 @@ def all_combinations(args, combos):
     return list(combinations(args, combos))
 
 # Benchmark construction
-def construct_sudoku(grid_size):
 
-
-    blocks = sqrt(grid_size)
-    if blocks.is_integer():
-        blocks = int(blocks)
-    else:
-        raise Exception(f"The grid size of sudoku must have a perfect square, {grid_size} square is {blocks}, "
-                        f"which is not integer")
-
-    # Variables
-    grid = intvar(1, grid_size, shape=(grid_size, grid_size), name="grid")
-
-    model = Model()
-
-    # Constraints on rows and columns
-    for row in grid:
-        model += AllDifferent(row).decompose()
-
-    for col in grid.T:  # numpy's Transpose
-        model += AllDifferent(col).decompose()
-
-    # Constraints on blocks
-    for i in range(0, grid_size, blocks):
-        for j in range(0, grid_size, blocks):
-            model += AllDifferent(grid[i:i + blocks, j:j + blocks]).decompose()  # python's indexing
-
-    C = list(model.constraints)
-
-    # it is needed to be able to make the "suboracle" in ask_query ... Will fix later in a better way.
-    C_T = set(toplevel_list(C))
-
-    return grid, C_T
 
 
 def construct_nurse_rostering(num_nurses, shifts_per_day, num_days):
@@ -213,43 +182,6 @@ def construct_examtt_advanced(NSemesters=9, courses_per_semester=6, rooms=3, tim
     C_T = set(toplevel_list(C))
 
     return courses, C_T
-
-
-def construct_jsudoku():
-    # Variables
-    grid = intvar(1, 9, shape=(9, 9), name="grid")
-
-    model = Model()
-
-    # Constraints on rows and columns
-    for row in grid:
-        model += AllDifferent(row).decompose()
-
-    for col in grid.T:  # numpy's Transpose
-        model += AllDifferent(col).decompose()
-
-    # the 9 blocks of squares in the specific instance of jsudoku
-    blocks = [
-        [grid[0, 0], grid[0, 1], grid[0, 2], grid[1, 0], grid[1, 1], grid[1, 2], grid[2, 0], grid[2, 1], grid[2, 2]],
-        [grid[0, 3], grid[0, 4], grid[0, 5], grid[0, 6], grid[1, 3], grid[1, 4], grid[1, 5], grid[1, 6], grid[2, 4]],
-        [grid[0, 7], grid[0, 8], grid[1, 7], grid[1, 8], grid[2, 8], grid[3, 8], grid[4, 8], grid[5, 7], grid[5, 8]],
-        [grid[4, 1], grid[4, 2], grid[4, 3], grid[5, 1], grid[5, 2], grid[5, 3], grid[6, 1], grid[6, 2], grid[6, 3]],
-        [grid[2, 3], grid[3, 2], grid[3, 3], grid[3, 4], grid[4, 4], grid[5, 4], grid[5, 5], grid[5, 6], grid[6, 5]],
-        [grid[2, 5], grid[2, 6], grid[2, 7], grid[3, 5], grid[3, 6], grid[3, 7], grid[4, 5], grid[4, 6], grid[4, 7]],
-        [grid[3, 0], grid[3, 1], grid[4, 0], grid[5, 0], grid[6, 0], grid[7, 0], grid[7, 1], grid[8, 0], grid[8, 1]],
-        [grid[6, 4], grid[7, 2], grid[7, 3], grid[7, 4], grid[7, 5], grid[8, 2], grid[8, 3], grid[8, 4], grid[8, 5]],
-        [grid[6, 6], grid[6, 7], grid[6, 8], grid[7, 6], grid[7, 7], grid[7, 8], grid[8, 6], grid[8, 7], grid[8, 8]]
-    ]
-
-    # Constraints on blocks
-    for i in range(0, 9):
-        model += AllDifferent(blocks[i][:]).decompose()  # python's indexing
-
-    C_T = set(toplevel_list(model.constraints))
-
-    print(len(C_T))
-
-    return grid, C_T
 
 
 def construct_golomb(marks):
@@ -466,11 +398,14 @@ def construct_benchmark(args):
 
     B = construct_bias(grid.flatten(), gamma)
 
-    return args.benchmark, grid, C_T, B
+    return args.benchmark, grid, C_T, B, gamma
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
+
+    parser.add_argument("-d","--directory", type=str, required=True, help="storage directory")
+    parser.add_argument("-n","--name", type=str, required=True, help="usual name of benchmark")
 
     # Parsing benchmark
     parser.add_argument("-b", "--benchmark", type=str, required=True,
@@ -556,11 +491,10 @@ def parse_args():
     return args
 
 if __name__ == "__main__":
-
     # Setup
     args = parse_args()
 
-    benchmark_name, grid, C_T, B = construct_benchmark(args)
+    benchmark_name, grid, C_T, B, gamma = construct_benchmark(args)
 
     print(f"benchmark name: {benchmark_name}, constriant network size: {len(C_T)}, bias size: {len(B)}")
 
@@ -577,12 +511,13 @@ if __name__ == "__main__":
         else:
             datasetCY.append(0)
 
-    out_file_X = f"benchmarks/{args.benchmark}/{args.benchmark}_{len(C_T)}_C.pickle"
-    out_file_Y = f"benchmarks/{args.benchmark}/{args.benchmark}_{len(C_T)}_CY.pickle"
+    out_file_X = f"{args.directory}/{args.benchmark}/{args.name}/bias.pickle"
+    out_file_Y = f"{args.directory}/{args.benchmark}/{args.name}/ground_truth.pickle"
+    out_file_G = f"{args.directory}/{args.benchmark}/{args.name}/gamma.pickle"
 
     os.makedirs(os.path.dirname(out_file_X), exist_ok=True)
     os.makedirs(os.path.dirname(out_file_Y), exist_ok=True)
-    with open(out_file_X, 'wb') as handle:
-        pickle.dump(datasetC, handle, protocol=pickle.HIGHEST_PROTOCOL)
-    with open(out_file_Y, 'wb') as handle:
-        pickle.dump(datasetCY, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    os.makedirs(os.path.dirname(out_file_G), exist_ok=True)
+    p_save(out_file_X, datasetC)
+    p_save(out_file_Y, datasetCY)
+    p_save(out_file_G, gamma)

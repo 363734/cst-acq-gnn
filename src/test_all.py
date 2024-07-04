@@ -1,7 +1,6 @@
 from src.bench_loader import load_bench
 from src.generate_training import generate_senarios_pourcent, get_indicator
 from src.graph import create_graph_unknown, switch_senario, choose_feats
-from src.memoization import p_load
 from src.opt import parser
 from src.results import results_training_graph
 from src.training import training
@@ -12,8 +11,10 @@ if __name__ == "__main__":
     print(args)
     print(opts)
 
-    benchs = ["sudoku9", "sudoku4"]
-    test_bench = "sudoku16"
+    # benchs = ["sudoku9", "sudoku4"]
+    # test_bench = "sudoku16"
+    benchs = ["nurse_2_7_15_5", "nurse_3_7_15_5"]
+    test_bench = "nurse_4_7_20_5"
 
     gamma = ["var1 == var2", "var1 != var2", "var1 < var2", "var1 > var2", "var1 >= var2", "var1 <= var2"]
 
@@ -48,9 +49,9 @@ if __name__ == "__main__":
 
         # print(updated_g)
 
-        sub_batch = [(g, gt)] + [(u_g, gt) for u_g in updated_g]
+        sub_batch = [(g, gt)] #+ [(u_g, gt) for u_g in updated_g]
         for (i, j) in sub_batch:
-            choose_feats(i)
+            choose_feats(i, opts)
         batch += sub_batch
 
     f_test, gt_test = load_bench(test_bench)
@@ -69,7 +70,7 @@ if __name__ == "__main__":
 
     test_graph = [(g, gt)] #+ [(u_g, gt) for u_g in updated_g_test]
     for (i, j) in test_graph:
-        choose_feats(i)
+        choose_feats(i, opts)
     test_graph = [test_graph[0]]
 
     stats = training(opts, batch, test_graph)

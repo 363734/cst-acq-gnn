@@ -1,8 +1,8 @@
 
 import numpy as np
 
-# def results_training_graph(stats):
-def results_training_graph(stats,opts, outputfile:str):
+# create learning graph
+def results_training_graph(stats, opts, outputfile:str):
     import matplotlib.pyplot as plt
     fig, axs = plt.subplots(3, 1, sharex='col')
     fig.suptitle(opts)
