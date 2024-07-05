@@ -10,7 +10,7 @@ from src.benchmark_classical_ca.load import load_benchmark
 
 from src.utils.feature import Feature
 
-from src.models.model import Model
+from src.models.model import Model, Variables
 from src.prior.prior_opt import parse_args
 
 
@@ -19,10 +19,10 @@ def get_models(benchfile: str, directory: str):
 
 
 def get_features(model: Model, max_dimensions: int, max_blocks: int):
-    return [get_features_candidate(model, c, max_dimensions, max_blocks) for c in model.bias]
+    return [get_features_candidate(c, model.variables, model.gamma, max_dimensions, max_blocks) for c in model.bias]
 
 
-def get_features_candidate(model: Model, candidate, max_dimensions: int, max_blocks: int):
+def get_features_candidate(candidate, variables: Variables, gamma, max_dimensions: int, max_blocks: int):
     feat = Feature(candidate)
     feat_vect = [feat.vars_name_is_shared]
     for i in range(max_dimensions):
@@ -32,12 +32,12 @@ def get_features_candidate(model: Model, candidate, max_dimensions: int, max_blo
         feat_vect.append(feat.dims_mean(i))
         feat_vect.append(feat.dims_mean_diff(i))
         for j in range(max_blocks):
-            feat_vect.append(feat.dims_block_is_shared(i, model.variables.var_dims_divisors, j))
-            feat_vect.append(feat.dims_block_max(i, model.variables.var_dims_divisors, j))
-            feat_vect.append(feat.dims_block_min(i, model.variables.var_dims_divisors, j))
-            feat_vect.append(feat.dims_block_mean(i, model.variables.var_dims_divisors, j))
-            feat_vect.append(feat.dims_block_mean_diff(i, model.variables.var_dims_divisors, j))
-    feat_vect.append(feat.get_gamma_id(model.gamma))
+            feat_vect.append(feat.dims_block_is_shared(i, variables.var_dims_divisors, j))
+            feat_vect.append(feat.dims_block_max(i, variables.var_dims_divisors, j))
+            feat_vect.append(feat.dims_block_min(i, variables.var_dims_divisors, j))
+            feat_vect.append(feat.dims_block_mean(i, variables.var_dims_divisors, j))
+            feat_vect.append(feat.dims_block_mean_diff(i, variables.var_dims_divisors, j))
+    feat_vect.append(feat.get_gamma_id(gamma))
     feat_vect.append(feat.arity)
     feat_vect.append(feat.has_constant)
     feat_vect.append(feat.constants(0))
