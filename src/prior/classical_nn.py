@@ -7,9 +7,9 @@ from matplotlib import pyplot as plt
 from sklearn.metrics import balanced_accuracy_score, make_scorer, accuracy_score, f1_score
 from sklearn.model_selection import cross_validate
 
-from utils import *
+from src.utils.utils import *
 from cpmpy import *
-from src.memoization import p_load
+from src.utils.memoization.memoization import p_load
 
 from sklearn.neural_network import MLPClassifier
 

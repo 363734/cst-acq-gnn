@@ -99,6 +99,11 @@ class ConAcq:
 
         self.metrics = Metrics()
 
+        self.prior_use = "no"
+        self.prior = None
+        self.prior_param = {}
+
+
     def train_classifier(self):
 
         # Train the specified machine learning classifier
@@ -233,6 +238,12 @@ class ConAcq:
             features.append(int(num[0]))
         else:
             features.append(0)
+
+        # TODO add here the new feature (test adding feature)
+        if self.prior_use == "feat":
+            print("it is used")
+            pred = self.prior.predict(c)
+            features.append(pred)
 
         return features
 
@@ -524,6 +535,19 @@ class ConAcq:
 
                     data_pred = [self.get_con_features(c) for c in B]
                     myscore = self.classifier.predict_proba(data_pred)
+
+                    # TODO add here prior for multiplication
+                    if self.prior_use == "mul":
+                        pred = [self.prior.predict(c) for c in B]
+                        lam = self.prior_param["lam"]
+                        myscore = [lam * pred[i] + (1 - lam) * myscore[i] for i in range(len(myscore))]
+                    if self.prior == "muldyn":
+                        pred = [self.prior.predict(c) for c in B]
+                        lam = self.prior_param["lam"] * self.prior_param["dec"]  # TODO % of bias instead
+                        myscore = [lam * pred[i] + (1 - lam) * myscore[i] for i in range(len(myscore))]
+
+
+
                     myscore = [m if len(m) > 1 else [0, m[0]] for m in myscore]
 
                     P_c = [myscore[i][1] for i in range(len(myscore))]

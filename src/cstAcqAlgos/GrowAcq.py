@@ -62,6 +62,10 @@ class GrowAcq(ConAcq):
             counts, countsB = self.get_counts()
             ca.set_counts(counts, countsB)
             ca.set_dataset(self.dataset_X, self.dataset_Y)
+            # TODO pass on the prior to the internal system
+            ca.prior = self.prior
+            ca.prior_use = self.prior_use
+            ca.prior_param = self.prior_param
 
             if self.classify and len(self.C_l.constraints) > 0:
                 ca.train_classifier()

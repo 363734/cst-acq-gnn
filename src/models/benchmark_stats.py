@@ -41,4 +41,3 @@ if __name__ == "__main__":
 
     stats = get_stats(models)
     j_save(os.path.join(args.directory, STATFILE), stats)
-    print(models)

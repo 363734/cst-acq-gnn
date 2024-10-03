@@ -17,6 +17,7 @@ from src.cstAcqAlgos.benchmarks import construct_9sudoku, construct_4sudoku, con
     construct_new_random, construct_random495, construct_golomb8, construct_murder_problem, \
     construct_job_shop_scheduling_problem, construct_examtt_simple, construct_examtt_advanced, \
     construct_nurse_rostering, construct_nurse_rostering_advanced
+from src.prior.prior import Prior
 from utils import *
 
 
@@ -119,6 +120,25 @@ def parse_args():
     parser.add_argument("-np", "--num-professors", type=int, required=False,
                         help="Only relevant when the chosen benchmark is exam timetabling - "
                              "the number of professors")
+
+    # NEW ARGS:
+    parser.add_argument("-pf", "--prior-file", type=str, required=False,
+                        help="", default="")
+
+    group_architecture = parser.add_mutually_exclusive_group(required=False)
+    group_architecture.add_argument("-paf", action="store_true", dest="prior_as_feature", help="")
+    group_architecture.add_argument("-pam", action="store_true", dest="prior_as_multiplier", help="")
+    group_architecture.add_argument("-pamd", action="store_true", dest="prior_as_multiplier_dyn", help="")
+    parser.set_defaults(prior_as_feature=False,
+                        prior_as_multiplier=False,
+                        prior_as_multiplier_dyn=False)
+
+    parser.add_argument("-lam", type=float, required=False, dest="prior_as_multiplier_lambda", help="",
+                                    default=0.5)
+
+    parser.add_argument("-dec", type=float, required=False, dest="prior_as_multiplier_decay", help="",
+                                    default=0.99)
+
     args = parser.parse_args()
 
     # Additional validity checks
@@ -164,6 +184,11 @@ def parse_args():
         parser.error("When exam-timetabling is chosen as benchmark, a number of semesters, a number of courses per"
                      "semester, a number of rooms, a number of timeslots per day, a number of days for exams"
                      " and a number of professors must be specified")
+
+    # NEW ARGS CHECKS
+    if args.prior_as_feature or args.prior_as_multiplier or args.prior_as_multiplier_dyn:
+        if len(args.prior_file) == 0:
+            parser.error("When using a prior, a prior file needs to be given")
 
     return args
 
@@ -295,51 +320,51 @@ def save_results(alg=None, inner_alg=None, qg=None, tl=None, t=None, fs=None, fc
 
     print("C_L size: ", len(toplevel_list(conacq.C_l.constraints)))
 
-    res_name = ["results/results"]
-    res_name.append(alg)
+    # res_name = ["results/results"]
+    # res_name.append(alg)
+    #
+    # # results_file = "results/results_" + args.algorithm + "_"
+    # if alg == "growacq":
+    #     if inner_alg is None: inner_alg = args.inner_algorithm
+    #     res_name.append(inner_alg)
+    #     # results_file += args.inner_algorithm + "_"
 
-    # results_file = "results/results_" + args.algorithm + "_"
-    if alg == "growacq":
-        if inner_alg is None: inner_alg = args.inner_algorithm
-        res_name.append(inner_alg)
-        # results_file += args.inner_algorithm + "_"
+    # res_name.append(f"{str(qg)}")
+    #
+    # if qg == "tqgen":
+    #     if tl is None: tl = args.time_limit
+    #     if t is None: t = 0.1
+    #     res_name.append(f"tl{str(tl)}")
+    #     res_name.append(f"t{str(t)}")
+    #
+    # res_name.append(f"fs{str(fs)}")
+    #
+    # res_name.append(f"fc{str(fc)}")
+    #
+    # if conacq.obj == "proba" or conacq.obj == "class":
+    #
+    #     res_name.append(str(conacq.obj))
+    #
+    #     if clf is None: clf = args.classifier
+    #     res_name.append(str(clf))
+    #
+    #     if clf == "MLP":
+    #         if hl is None: hl = args.hidden_layers
+    #         if lr is None: lr = args.learning_rate
+    #         res_name.append(str(hl))
+    #         res_name.append(str(lr))
+    #
+    # res_name.append(bench)
 
-    res_name.append(f"{str(qg)}")
+    # results_file = "_".join(res_name)
 
-    if qg == "tqgen":
-        if tl is None: tl = args.time_limit
-        if t is None: t = 0.1
-        res_name.append(f"tl{str(tl)}")
-        res_name.append(f"t{str(t)}")
+    # file_exists = os.path.isfile(results_file)
+    # f = open(results_file, "a")
 
-    res_name.append(f"fs{str(fs)}")
-
-    res_name.append(f"fc{str(fc)}")
-
-    if conacq.obj == "proba" or conacq.obj == "class":
-
-        res_name.append(str(conacq.obj))
-
-        if clf is None: clf = args.classifier
-        res_name.append(str(clf))
-
-        if clf == "MLP":
-            if hl is None: hl = args.hidden_layers
-            if lr is None: lr = args.learning_rate
-            res_name.append(str(hl))
-            res_name.append(str(lr))
-
-    res_name.append(bench)
-
-    results_file = "_".join(res_name)
-
-    file_exists = os.path.isfile(results_file)
-    f = open(results_file, "a")
-
-    if not file_exists:
-        results = "CL\tTot_q\ttop_lvl_q\tgen_q\tfs_q\tfc_q\tavg|q|\tgen_time\tavg_t\tmax_t\ttot_t\tconv\n"
-    else:
-        results = ""
+    # if not file_exists:
+    results = "CL\tTot_q\ttop_lvl_q\tgen_q\tfs_q\tfc_q\tavg|q|\tgen_time\tavg_t\tmax_t\ttot_t\tconv\n"
+    # else:
+    #     results = ""
 
     results += str(len(toplevel_list(conacq.C_l.constraints))) + "\t" + str(conacq.metrics.queries_count) + "\t" + str(
         conacq.metrics.top_lvl_queries) \
@@ -358,14 +383,17 @@ def save_results(alg=None, inner_alg=None, qg=None, tl=None, t=None, fs=None, fc
 
     results += "\t" + str(conacq.metrics.converged) + "\n"
 
-    f.write(results)
-    f.close()
+    print("")
+    print(results)
+    # f.write(results)
+    # f.close()
 
 
 if __name__ == "__main__":
 
     # Setup
     args = parse_args()
+    print(args)
 
     benchmark_name, grid, C_T, oracle, gamma = construct_benchmark()
     grid.clear()
@@ -411,6 +439,22 @@ if __name__ == "__main__":
                             findc_version=fc_version)
     else:
         raise Exception("Algorithm not implemented")
+
+    # Load prior
+    prior = None
+    if "prior_file" in args and not args.prior_file == "":
+        prior = Prior(args.prior_file)
+        prior.variables(grid)
+        if args.prior_as_feature:
+            ca_system.prior_use = "feat"
+        if args.prior_as_multiplier:
+            ca_system.prior_use = "mul"
+            ca_system.prior_param["lam"] = args.prior_as_multiplier_lambda
+        if args.prior_as_multiplier_dyn:
+            ca_system.prior_use = "muldyn"
+            ca_system.prior_param["lam"] = args.prior_as_multiplier_lambda
+            ca_system.prior_param["dec"] = args.prior_as_multiplier_decay
+        ca_system.prior = prior
 
     ca_system.learn()
 

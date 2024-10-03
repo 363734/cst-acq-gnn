@@ -127,14 +127,9 @@ class Feature:
         else:
             return self._constants[i]
 
-    def get_gamma_id(self, gamma: List[str]):
+    def get_gamma_id(self, gamma):
         # return the id of the relation in the gamma
-        for i in range(len(gamma)):
-            if gamma[i] == self.relation:
-                return i
-        raise Exception(
-            f"Check why constraint relation was not found in relations: constraint {self.cst}, relation: {self.relation}, gamma: {gamma}")
-        # return -1
+        return gamma.id_relation(self.relation)
 
     def get_gamma_one_hot(self, gamma: List[str]):
         # return a one-hot encoding of the relation within the gamma

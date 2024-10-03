@@ -40,8 +40,9 @@ class Variables:
     def var_dims_length(self):
         if self._var_dims_length is None:
             dims = self.var_dims
-            self._var_dims_length = [[max([dims[i][j][d] for j in range(len(dims[i]))]) + 1 for d in range(len(dims[i][0]))]
-                                     for i in range(len(dims))]
+            self._var_dims_length = [
+                [max([dims[i][j][d] for j in range(len(dims[i]))]) + 1 for d in range(len(dims[i][0]))]
+                for i in range(len(dims))]
         return self._var_dims_length
 
     @property
@@ -52,6 +53,10 @@ class Variables:
             self._var_dims_divisors = {names[i]: [get_divisors(dims_length[i][j]) for j in range(len(dims_length[i]))]
                                        for i in range(len(dims_length))}
         return self._var_dims_divisors
+
+    def __str__(self):
+        return str(self.variables)
+
 
 class Model:
     def __init__(self, name: str, family: str, data_dir: str):
@@ -68,10 +73,9 @@ class Model:
     @property
     def gamma(self):
         if self._gamma is None:
-            # TODO retrieve it from gamma at creation
-            # self._gamma = p_load(os.path.join(self.data_path, "gamma.pickle"))
-            bias = self.bias
-            self._gamma = list(set([c.get_relation() for c in bias]))
+            self._gamma = p_load(os.path.join(self.data_path, "gamma.pickle"))
+            # bias = self.bias
+            # self._gamma = list(set([c.get_relation() for c in bias]))
         return self._gamma
 
     @property
@@ -102,9 +106,8 @@ class Model:
             self._variables = Variables(get_variables_from_constraints(bias))
         return self._variables
 
-
     def gamma_size(self):
-        return len(self.gamma)
+        return self.gamma.size
 
     def bias_size(self):
         return len(self.bias)
@@ -127,15 +130,15 @@ class Model:
 
 
 if __name__ == "__main__":
-    m = Model("sudoku4", "sudoku", "../../target/data")
-    print(m.gamma)
-    print(m.bias)
-    print(m.bias_map)
-    print(m.ground_truth)
-    print(m.variables)
-    print(m.variables.var_names)
-    print(m.variables.var_names_set)
-    print(m.variables.var_dims)
-    print(m.variables.var_dims_length)
-    print(m.variables.var_dims_divisors)
-    print(m.get_stats())
+    m = Model("sudoku_4", "sudoku", "../../target/data")
+    print(f"Gamma: {m.gamma}")
+    print(f"Bias: {m.bias}")
+    print(f"Bias (map form): {m.bias_map}")
+    print(f"Ground truth: {m.ground_truth}")
+    print(f"Variables: {m.variables}")
+    print(f"Vars names: {m.variables.var_names}")
+    print(f"Vars names unique only: {m.variables.var_names_set}")
+    print(f"Vars dimensions: {m.variables.var_dims}")
+    print(f"Vars dimensions max: {m.variables.var_dims_length}")
+    print(f"Vars divisors: {m.variables.var_dims_divisors}")
+    print(f"Stats: {m.get_stats()}")
