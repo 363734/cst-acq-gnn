@@ -4,7 +4,8 @@ from src.benchmark.load import load_benchmark
 from src.log_analysis.experiment_runningCA import plot_table_results
 from src.log_analysis.load_evaluation_log import load_evaluation_log
 from src.log_analysis.load_training_log import load_training_log
-from src.log_analysis.experiment_allbutone_training import plot_loss, plot_train, plot_eval, plot_allbut
+from src.log_analysis.experiment_allbutone_training import plot_loss, plot_train, plot_eval, plot_allbut, \
+    plot_eval_multi, plot_train_multi, plot_loss_multi
 
 
 def parse_args():
@@ -12,13 +13,19 @@ def parse_args():
 
     group_architecture = parser.add_mutually_exclusive_group(required=True)
     group_architecture.add_argument("-loss", action="store_true", dest="graph_loss", help="")
+    group_architecture.add_argument("-loss_multi", action="store_true", dest="graph_loss_multi", help="")
     group_architecture.add_argument("-train_met", action="store_true", dest="graph_train_met", help="")
+    group_architecture.add_argument("-train_met_multi", action="store_true", dest="graph_train_met_multi", help="")
     group_architecture.add_argument("-eval_met", action="store_true", dest="graph_eval_met", help="")
+    group_architecture.add_argument("-eval_met_multi", action="store_true", dest="graph_eval_met_multi", help="")
     group_architecture.add_argument("-all_but", action="store_true", dest="graph_all_but", help="")
     group_architecture.add_argument("-results_ca", action="store_true", dest="results_ca", help="")
     parser.set_defaults(graph_loss=False,
+                        graph_loss_multi=False,
                         graph_train_met=False,
-                        graph_test_met=False,
+                        graph_train_met_multi=False,
+                        graph_eval_met=False,
+                        graph_eval_met_multi=False,
                         graph_all_but=False,
                         results_ca=False)
 
@@ -39,6 +46,7 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
+    nb_run = 10
 
     if args.graph_loss:
         train_stat = load_training_log(args.log_file)
@@ -47,13 +55,28 @@ if __name__ == "__main__":
         else:
             print("no graph produced, this method do not have loss")
 
+    if args.graph_loss_multi:
+        train_stat = [load_training_log(lf) for lf in  [args.log_file.format(i) for i in range(nb_run)]]
+        if any(["loss" in t_s for t_s in train_stat]):
+            plot_loss_multi(train_stat, args.output_file)
+        else:
+            print("no graph produced, this method do not have loss")
+
     if args.graph_train_met:
         train_stat = load_training_log(args.log_file)
         plot_train(train_stat, args.output_file)
 
+    if args.graph_train_met_multi:
+        train_stat = [load_training_log(lf) for lf in  [args.log_file.format(i) for i in range(nb_run)]]
+        plot_train_multi(train_stat, args.output_file)
+
     if args.graph_eval_met:
         test_stat = load_evaluation_log(args.log_file)
         plot_eval(test_stat, args.output_file)
+
+    if args.graph_eval_met_multi:
+        test_stat = [load_evaluation_log(lf) for lf in  [args.log_file.format(i) for i in range(nb_run)]]
+        plot_eval_multi(test_stat, args.output_file)
 
     if args.graph_all_but:
         bench = load_benchmark(args.benchmark)
