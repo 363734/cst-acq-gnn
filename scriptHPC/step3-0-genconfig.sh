@@ -38,7 +38,7 @@ testsets=(
   "classical_CA/training_set_classical_ca_only_sudoku_9"
   "classical_CA/training_set_classical_ca_only_TTS_8_6_3_3_10"
 )
-algos=("nn" "rf")
+algos=("nn" "rf" "cnb" "gnb" "svm")
 for i in "${!modelnames[@]}"
 do
   for runid in {0..9}

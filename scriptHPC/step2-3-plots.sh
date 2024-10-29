@@ -2,7 +2,7 @@
 # Submission script for Lemaitre4
 #SBATCH --job-name=step2-3-plottraining
 #SBATCH --output=log/log_step2-3-plottraining_%A_%a.txt
-#SBATCH --array=1-16
+#SBATCH --array=1-40
 #SBATCH --time=00:10:00 # hh:mm:ss
 #
 #SBATCH --ntasks=1

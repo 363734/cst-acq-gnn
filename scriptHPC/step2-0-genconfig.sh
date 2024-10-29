@@ -38,7 +38,7 @@ modelnames=(
   "classical_ca_allbut_sudoku_9"
   "classical_ca_allbut_TTS_8_6_3_3_10"
 )
-algos=("nn" "rf")
+algos=("nn" "rf" "cnb" "gnb" "svm")
 for i in "${!modelnames[@]}"
 do
   for featureset in "aaai24"
