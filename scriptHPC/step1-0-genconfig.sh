@@ -1,4 +1,8 @@
 #! /bin/bash
+module load Python/3.11.3-GCCcore-12.3.0
+module load virtualenv
+source ../venv/bin/activate
+
 # Step 1: creation/loading of datasets (creating of the pickle file for each models)
 # Step 1-0: generate the file containing all the parameters set to be generated
 

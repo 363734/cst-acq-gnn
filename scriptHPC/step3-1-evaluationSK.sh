@@ -12,6 +12,10 @@
 #SBATCH --mail-user=helene.verhaeghe27+cism@gmail.com
 #SBATCH --mail-type=ALL
 
+module load Python/3.11.3-GCCcore-12.3.0
+module load virtualenv
+source ../venv/bin/activate
+
 if [ -z "${SLURM_ARRAY_TASK_ID}" ]
 then # run on laptop
   a=$1

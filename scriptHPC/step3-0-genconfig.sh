@@ -1,4 +1,9 @@
 #! /bin/bash
+
+module load Python/3.11.3-GCCcore-12.3.0
+module load virtualenv
+source ../venv/bin/activate
+
 # Step 3: evaluation of a model with a given benchmark
 # Step 3-0: generate the file containing all the parameters set to be generated
 

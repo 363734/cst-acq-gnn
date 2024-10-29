@@ -2,6 +2,10 @@
 # Step 2: training predictors with a given benchmark
 # Step 2-0: generate the file containing all the parameters set to be generated
 
+module load Python/3.11.3-GCCcore-12.3.0
+module load virtualenv
+source ../venv/bin/activate
+
 workingdir="../target"
 scriptdir="../src"
 datadir="${workingdir}/data"
