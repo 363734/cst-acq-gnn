@@ -1,13 +1,13 @@
 from src.models.model import Variables
 from src.prior.sk.prior_sk import get_features_candidate
 
-from src.utils.memoization.memoization_nn import load_nn
+from src.utils.memoization.memoization_nn import load_sk_classifier
 
 class Prior:
     def __init__(self, file):
         self.vars = None
         self.file = file
-        self.classifier, self.parameter = load_nn(self.file)
+        self.classifier, self.parameter = load_sk_classifier(self.file)
         self.architecture = self.parameter['architecture']
         if self.architecture == 'gnn':
             print('need to add support for gnn')
@@ -30,7 +30,7 @@ class Prior:
 
 
 if __name__ == "__main__":
-    classifier, parameter = load_nn("../../target/models/nn/nn_classical_ca.pickle")
+    classifier, parameter = load_sk_classifier("../../target/models/nn/nn_classical_ca.pickle")
     print(parameter)
     p = Prior("../../target/models/nn/nn_classical_ca.pickle")
     print(p)

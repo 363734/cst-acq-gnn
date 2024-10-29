@@ -5,7 +5,7 @@ from sklearn.neural_network import MLPClassifier
 from src.prior.sk.sk_classifier import get_classifier
 from src.utils.metrics import print_metrics_all, compute_metrics
 from src.models.gamma import Gamma, COMPARE_GAMMA
-from src.utils.memoization.memoization_nn import save_nn, load_nn
+from src.utils.memoization.memoization_nn import save_sk_classifier, load_sk_classifier
 
 from src.benchmark.load import load_benchmark
 
@@ -52,7 +52,7 @@ def get_features_candidate(candidate, variables: Variables, gamma, max_dimension
 
 
 def train_prior_sk(args):
-    print(f":- Training NN -------------")
+    print(f":- Training SK classifier -------------")
     print(f"\twith parameters {args}")
     models = get_models(args.benchmark, args.data_directory)
     classifier, parameters = get_classifier(args)
@@ -75,7 +75,7 @@ def train_prior_sk(args):
     parameters["max_blocks"] = args.max_blocks
     parameters["features_set"] = args.features_set
     parameters["gamma"] = gamma
-    save_nn(args.model_file, classifier, parameters)
+    save_sk_classifier(args.model_file, classifier, parameters)
     print(f":- Training set metrics")
     if args.architecture_nn:
         print(f"\tLoss: {classifier.loss_curve_}")
@@ -88,11 +88,11 @@ def train_prior_sk(args):
 
 
 def eval_prior_sk(args):
-    print(f":- Evaluate NN -------------")
+    print(f":- Evaluate SK classifier -------------")
     print(f"\twith parameters {args}")
     models = get_models(args.benchmark, args.data_directory)
     print(f"::- load prior")
-    classifier, parameters = load_nn(args.model_file)
+    classifier, parameters = load_sk_classifier(args.model_file)
     feat = []
     gt_all = []
     print(f"::- load testing models")
