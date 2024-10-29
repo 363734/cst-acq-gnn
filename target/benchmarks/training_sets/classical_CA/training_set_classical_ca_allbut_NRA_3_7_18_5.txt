@@ -1,0 +1,5 @@
+sudoku	sudoku_9
+jsudoku	jsudoku_9
+job_shop_scheduling	JSS_10_3_15_0
+exam_timetabling_simple	TTS_8_6_3_3_10
+random	Random_100_5_200

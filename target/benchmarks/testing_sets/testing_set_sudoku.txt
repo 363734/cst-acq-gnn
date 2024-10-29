@@ -1,0 +1,4 @@
+sudoku  sudoku_4
+sudoku  sudoku_9
+sudoku  sudoku_16
+sudoku  sudoku_25

@@ -1,0 +1,6 @@
+sudoku  sudoku_16
+rsudoku rsudoku_5_3
+nurse_rostering_adv NRA_4_10_16_4
+job_shop_scheduling JSS_15_4_20_2
+exam_timetabling_simple TTS_4_9_7_4_15
+random  Random_50_10_300

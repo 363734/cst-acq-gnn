@@ -1,0 +1,5 @@
+sudoku	sudoku_9
+jsudoku	jsudoku_9
+nurse_rostering_adv	NRA_3_7_18_5
+job_shop_scheduling	JSS_10_3_15_0
+random	Random_100_5_200
