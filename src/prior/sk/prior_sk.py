@@ -5,7 +5,7 @@ from sklearn.neural_network import MLPClassifier
 from src.prior.sk.sk_classifier import get_classifier
 from src.utils.metrics import print_metrics_all, compute_metrics
 from src.models.gamma import Gamma, COMPARE_GAMMA
-from src.utils.memoization.memoization_nn import save_sk_classifier, load_sk_classifier
+from src.utils.memoization.memoization_sk import save_sk_classifier, load_sk_classifier
 
 from src.benchmark.load import load_benchmark
 
