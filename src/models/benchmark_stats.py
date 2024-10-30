@@ -20,7 +20,7 @@ def parse_args():
 def get_stats(models: List[Model]):
     stats = {}
     for m in models:
-        stats[m.name] = m.get_stats()
+        stats[m.name] = m.get_stats_json()
     return stats
 
 

@@ -129,6 +129,12 @@ class Model:
         return d
 
 
+    def get_stats_json(self):
+        d = self.get_stats()
+        d["gamma"] = str(d["gamma"])
+        return d
+
+
 if __name__ == "__main__":
     m = Model("sudoku_4", "sudoku", "../../target/data")
     print(f"Gamma: {m.gamma}")
