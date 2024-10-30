@@ -3,7 +3,7 @@
 #SBATCH --job-name=step1-1-generationDataBench
 #SBATCH --output=log/log_step1-1-generationDataBench_%A_%a.txt
 #SBATCH --array=1-334
-#SBATCH --time=00:30:00 # hh:mm:ss
+#SBATCH --time=01:00:00 # hh:mm:ss
 #
 #SBATCH --ntasks=1
 #SBATCH --mem-per-cpu=1000 # megabytes
