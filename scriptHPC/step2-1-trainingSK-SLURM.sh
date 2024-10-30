@@ -42,7 +42,9 @@ modelname="$(awk -F "\t" -v JOBID="$a" '$1==JOBID {print $4}' "${ldir}/${configf
 featuresset=$(awk -F "\t" -v JOBID="$a" '$1==JOBID {print $5}' "${ldir}/${configfile}")
 
 modeldir="${workingdir}/models/${algo}"
+mkdir -p ${modeldir}
 logdir="${ldir}/training_${algo}"
+mkdir -p ${logdir}
 
 
 logfile="${logdir}/model_${modelname}.txt"
