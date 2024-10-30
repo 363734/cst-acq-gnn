@@ -33,14 +33,14 @@ do
   do
     if [ "$dim1" != "$dim2" ]
     then
-      printf "${jobid}\t-n \"rsudoku_${dim1}_${dim2}\" -b rsudoku -dim1 ${dim1} -dim2 ${dim2}\n" >> "${datadir}/${outputfile}"
+      printf "${jobid}\t-n rsudoku_${dim1}_${dim2} -b rsudoku -dim1 ${dim1} -dim2 ${dim2}\n" >> "${datadir}/${outputfile}"
       jobid=$((jobid + 1))
     fi
   done
 done
 
 #jsudoku instances
-printf "${jobid}\t-n \"jsudoku_9\" -b jsudoku\n" >> "${datadir}/${outputfile}"
+printf "${jobid}\t-n jsudoku_9 -b jsudoku\n" >> "${datadir}/${outputfile}"
 jobid=$((jobid + 1))
 
 #nurse rostering instances
@@ -52,7 +52,7 @@ do
     do
       for nursespershift in 4 5 6 # CA=5
       do
-        printf "${jobid}\t-n \"NRA_${numshiftsperday}_${numdaysforschedule}_${numnurses}_${nursespershift}\" -b nurse_rostering_adv -nspd ${numshiftsperday} -ndfs ${numdaysforschedule} -nn ${numnurses} -nps ${nursespershift}\n" >> "${datadir}/${outputfile}"
+        printf "${jobid}\t-n NRA_${numshiftsperday}_${numdaysforschedule}_${numnurses}_${nursespershift} -b nurse_rostering_adv -nspd ${numshiftsperday} -ndfs ${numdaysforschedule} -nn ${numnurses} -nps ${nursespershift}\n" >> "${datadir}/${outputfile}"
         jobid=$((jobid + 1))
       done
     done
@@ -70,7 +70,7 @@ do
       do
         for numdaysforexams in 5 10 15 # CA=10
         do
-          printf "${jobid}\t-n \"TTS_${numsemesters}_${numcoursespersemester}_${numrooms}_${numtimeslotsperday}_${numdaysforexams}\" -b exam_timetabling_simple -ns ${numsemesters} -ncps ${numcoursespersemester} -nr ${numrooms} -ntpd ${numtimeslotsperday} -ndfe ${numdaysforexams}\n" >> "${datadir}/${outputfile}"
+          printf "${jobid}\t-n TTS_${numsemesters}_${numcoursespersemester}_${numrooms}_${numtimeslotsperday}_${numdaysforexams} -b exam_timetabling_simple -ns ${numsemesters} -ncps ${numcoursespersemester} -nr ${numrooms} -ntpd ${numtimeslotsperday} -ndfe ${numdaysforexams}\n" >> "${datadir}/${outputfile}"
           jobid=$((jobid + 1))
         done
       done
@@ -87,7 +87,7 @@ do
     do
       for seed in 0 1 2 # CA=0
       do
-        printf "${jobid}\t-n \"JSS_${numjobs}_${nummachines}_${horizon}_${seed}\" -b job_shop_scheduling -nj ${numjobs} -nm ${nummachines} -hor ${horizon} -s ${seed}\n" >> "${datadir}/${outputfile}"
+        printf "${jobid}\t-n JSS_${numjobs}_${nummachines}_${horizon}_${seed} -b job_shop_scheduling -nj ${numjobs} -nm ${nummachines} -hor ${horizon} -s ${seed}\n" >> "${datadir}/${outputfile}"
         jobid=$((jobid + 1))
       done
     done
@@ -101,7 +101,7 @@ do
   do
     for numbercst in 200 300 400 # CA=200
     do
-      printf "${jobid}\t-n \"Random_${numbervars}_${sizedomain}_${numbercst}\" -b random -nv ${numbervars} -sd ${sizedomain} -nc ${numbercst}\n" >> "${datadir}/${outputfile}"
+      printf "${jobid}\t-n Random_${numbervars}_${sizedomain}_${numbercst} -b random -nv ${numbervars} -sd ${sizedomain} -nc ${numbercst}\n" >> "${datadir}/${outputfile}"
       jobid=$((jobid + 1))
     done
   done

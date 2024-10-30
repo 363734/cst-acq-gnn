@@ -6,7 +6,7 @@
 #SBATCH --time=01:00:00 # hh:mm:ss
 #
 #SBATCH --ntasks=1
-#SBATCH --mem-per-cpu=1000 # megabytes
+#SBATCH --mem-per-cpu=15000 # megabytes
 #SBATCH --partition=batch
 #
 #SBATCH --mail-user=helene.verhaeghe27+cism@gmail.com
