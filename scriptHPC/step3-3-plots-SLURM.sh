@@ -49,7 +49,7 @@ echo ${logfile}
 printf "+++ Plots for model ${modelname} [algo = ${algo}, testing set = ${testingset}] +++\n"
 
 outputgraphmetric="${logdir}/model_${modelname}_[${testingset//\//-}]_plot_metric.pdf"
-python ${scriptdir}/log_analysis/produce_graph.py -eval_met_multi -lf ${logfile} -of ${outputgraphmetric}
+$c python ${scriptdir}/log_analysis/produce_graph.py -eval_met_multi -lf ${logfile} -of ${outputgraphmetric}
 
 printf "+++ Plots DONE +++\n"
 

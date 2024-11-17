@@ -52,7 +52,7 @@ logfile="${logdir}/model_${modelname}_[${testingset//\//-}].txt"
 
 printf "+++ Evaluating model ${modelname} [algo = ${algo}, testing set = ${testingset}] +++\n"
 
-python ${scriptdir}/prior/eval.py -${algo} -dd ${datadir} -bm "${evaluationsetdir}/${testingset}.txt" -mf "${modeldir}/${modelname}.pickle" > ${logfile}
+$c python ${scriptdir}/prior/eval.py -${algo} -dd ${datadir} -bm "${evaluationsetdir}/${testingset}.txt" -mf "${modeldir}/${modelname}.pickle" > ${logfile}
 
 printf "+++ Evaluation DONE +++\n"
 
