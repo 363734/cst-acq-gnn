@@ -241,7 +241,6 @@ class ConAcq:
 
         # TODO add here the new feature (test adding feature)
         if self.prior_use == "feat":
-            print("it is used")
             pred = self.prior.predict(c)
             features.append(pred)
 
