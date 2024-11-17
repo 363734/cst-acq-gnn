@@ -1,7 +1,7 @@
 from src.models.model import Variables
 from src.prior.sk.prior_sk import get_features_candidate
 
-from src.utils.memoization.memoization_nn import load_sk_classifier
+from src.utils.memoization.memoization_sk import load_sk_classifier
 
 class Prior:
     def __init__(self, file):
