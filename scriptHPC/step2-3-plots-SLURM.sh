@@ -43,9 +43,15 @@ logfile="${logdir}/model_${modelname}.txt"
 
 if [ "${algo}" == "nn" ]
 then
+  printf "+++ Generating plot loss model ${modelname} [algo = ${algo}] +++\n"
   outputgraphloss="${logdir}/model_${modelname}_plot_loss.pdf"
   python ${scriptdir}/log_analysis/produce_graph.py -loss_multi -lf "${logfile}" -of ${outputgraphloss}
+  printf "+++ Generating plot loss DONE +++\n"
+else
+  printf "+++ No plot loss model ${modelname} [algo = ${algo}] +++\n"
 fi
 
+printf "+++ Generating plot metric model ${modelname} [algo = ${algo}] +++\n"
 outputgraphmetric="${logdir}/model_${modelname}_plot_metric.pdf"
 python ${scriptdir}/log_analysis/produce_graph.py -train_met_multi -lf "${logfile}" -of ${outputgraphmetric}
+printf "+++ Generating plot metric DONE +++\n"
