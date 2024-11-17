@@ -2,7 +2,7 @@
 # Submission script for Lemaitre4
 #SBATCH --job-name=step4-3-prior-as-multiplier
 #SBATCH --output=log/log_step4-2-prior-as-multiplier_%A_%a.txt
-#SBATCH --array=1-2400
+#SBATCH --array=1-9600
 #SBATCH --time=02:00:00 # hh:mm:ss
 #
 #SBATCH --ntasks=1
